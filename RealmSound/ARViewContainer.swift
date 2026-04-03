@@ -1,17 +1,14 @@
 import SwiftUI
-import ARKit
 import RealityKit
 
 struct ARViewContainer: UIViewRepresentable {
-    @ObservedObject var arManager: ARManager
+    @Binding var arView: ARView
     
     func makeUIView(context: Context) -> ARView {
-        let arView = ARView(frame: .zero)
-        arManager.setupARView(arView)
+        arView.environment.background = .cameraFeed()
+        arView.renderOptions = [.disableMotionBlur, .disableGroundingShadows]
         return arView
     }
     
-    func updateUIView(_ arView: ARView, context: Context) {
-        arManager.updateARView(arView)
-    }
+    func updateUIView(_ uiView: ARView, context: Context) {}
 }

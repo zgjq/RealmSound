@@ -1,46 +1,20 @@
-import Foundation
-import AVFoundation
-import UIKit
+import RealityKit
+import ReplayKit
 
-/// Service for exporting captured spirit videos
-class VideoExporter: ObservableObject {
-    @Published var isExporting = false
-    @Published var exportProgress: Double = 0
-    @Published var exportedURL: URL?
-    
-    /// Export a video representation of the captured spirit
-    func exportSpiritVideo(_ spirit: CapturedSpirit) async {
-        isExporting = true
-        exportProgress = 0
+class VideoExporter {
+    func start15SecondARRecording(in arView: ARView, completion: @escaping (URL?) -> Void) async {
+        let recorder = RPScreenRecorder.shared()
+        guard recorder.isAvailable else { return }
         
-        defer {
-            isExporting = false
-        }
-        
-        // In production, this would:
-        // 1. Render AR scene with spirit to a video
-        // 2. Add particle effects overlay
-        // 3. Encode as HEVC/H.265
-        // 4. Save to photo library
-        
-        try? await Task.sleep(for: .seconds(2))
-        exportProgress = 0.5
-        
-        try? await Task.sleep(for: .seconds(1))
-        exportProgress = 1.0
-        
-        // Placeholder: return a dummy URL
-        exportedURL = FileManager.default.temporaryDirectory
-            .appendingPathComponent("\(spirit.id.uuidString).mp4")
-    }
-    
-    /// Save video to photo library
-    func saveToPhotoLibrary(_ url: URL) async {
-        // In production, use PHPhotoLibrary to save
-    }
-    
-    /// Share spirit via system share sheet
-    func shareSpirit(_ spirit: CapturedSpirit) {
-        // In production, present UIActivityViewController
+        do {
+            try await recorder.startRecording(withMicrophoneEnabled: true)
+            try await Task.sleep(for: .seconds(15))
+            let preview = try await recorder.stopRecording()
+            // 真实项目可保存到相册或返回 URL
+            completion(nil) // 这里可扩展返回视频 URL
+            preview.previewController().show(in: UIApplication.shared.windows.first!)
+        } catch { print("导出失败") }
     }
 }
+
+

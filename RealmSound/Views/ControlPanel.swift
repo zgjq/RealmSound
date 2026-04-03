@@ -1,118 +1,48 @@
 import SwiftUI
 
 struct ControlPanel: View {
-    @ObservedObject var arManager: ARManager
-    @Environment(\.dismiss) private var dismiss
+    @Binding var intensity: Double
+    @Binding var fusion: Double
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
+        VStack(spacing: 20) {
             HStack {
-                Text("Settings")
-                    .font(.headline)
-                Spacer()
-                Button("Done") { dismiss() }
-                    .foregroundColor(.purple)
-            }
-            .padding()
-            
-            Divider()
-            
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Soundscape detection
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Soundscape Detection", systemImage: "waveform")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        
-                        if let soundscape = arManager.currentSoundscape {
-                            HStack {
-                                Image(systemName: soundscape.category.icon)
-                                Text(soundscape.name)
-                                Spacer()
-                                Text("\(soundscape.intensity * 100, specifier: "%.0f")%")
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding()
-                            .background(Color.gray.opacity(0.1))
-                            .cornerRadius(10)
-                        } else {
-                            Text("Detecting...")
-                                .foregroundColor(.secondary)
-                                .padding()
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Heart rate
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Heart Rate", systemImage: "heart.fill")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.red)
-                        
-                        if let hr = arManager.currentHeartRate {
-                            Text("\(hr) BPM")
-                                .font(.title2)
-                                .fontWeight(.bold)
-                        } else {
-                            Text("Not connected")
-                                .foregroundColor(.secondary)
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Particle intensity
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Particle Intensity", systemImage: "sparkles")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        
-                        Slider(value: .constant(0.7), in: 0...1)
-                            .tint(.purple)
-                    }
-                    .padding(.horizontal)
-                    
-                    // Detected planes
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label("Environment", systemImage: "cube.transparent")
-                            .font(.subheadline)
-                            .fontWeight(.semibold)
-                        
-                        Text("\(arManager.detectedPlanes) planes detected")
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.horizontal)
+                Slider(value: $intensity, in: 0...1) {
+                    Text("情绪强度")
+                } minimumValueLabel: {
+                    Image(systemName: "flame.fill")
+                } maximumValueLabel: {
+                    Image(systemName: "flame")
                 }
-                .padding(.vertical)
+                .tint(.pink)
+            }
+            
+            HStack {
+                Slider(value: $fusion, in: 0...1) {
+                    Text("环境融合")
+                } minimumValueLabel: {
+                    Image(systemName: "leaf.fill")
+                } maximumValueLabel: {
+                    Image(systemName: "leaf")
+                }
+                .tint(.cyan)
+            }
+            
+            HStack(spacing: 40) {
+                Button(action: { print("🎵 重新生成音乐") }) {
+                    Label("重生", systemImage: "arrow.clockwise.circle.fill")
+                }
+                .buttonStyle(.borderedProminent)
+                
+                Button(action: { print("💾 保存记忆胶囊") }) {
+                    Label("胶囊", systemImage: "capsule.fill")
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
-        .background(Color(.systemBackground))
-        .cornerRadius(20, corners: [.topLeft, .topRight])
+        .padding()
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24))
+        .padding(.horizontal)
     }
-}
-
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-    
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
-    }
-}
-
-#Preview {
-    ControlPanel(arManager: ARManager())
 }

@@ -1,21 +1,19 @@
 import CoreData
 
-struct PersistenceController {
+class PersistenceController {
     static let shared = PersistenceController()
     
-    let container: NSPersistentContainer
+    let container: NSPersistentCloudKitContainer
     
-    init(inMemory: Bool = false) {
-        container = NSPersistentContainer(name: "RealmSound")
-        
-        if inMemory {
-            container.persistentStoreDescriptions.first?.url = URL(fileURLWithPath: "/dev/null")
-        }
+    init() {
+        container = NSPersistentCloudKitContainer(name: "RealmSound")
+        container.persistentStoreDescriptions.first?.setOption(true as NSNumber, forKey: NSPersistentCloudKitContainerOptionsKey)
         
         container.loadPersistentStores { _, error in
-            if let error = error {
-                fatalError("Core Data error: \(error)")
+            if let error = error as NSError? {
+                fatalError("Unresolved error \(error), \(error.userInfo)")
             }
         }
+        container.viewContext.automaticallyMergesChangesFromParent = true
     }
 }

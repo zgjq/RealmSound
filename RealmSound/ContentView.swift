@@ -1,36 +1,29 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showARCamera = false
-    @State private var selectedTab = 0
-    
     var body: some View {
-        TabView(selection: $selectedTab) {
+        TabView {
             ARCameraView()
                 .tabItem {
-                    Image(systemName: "camera.viewfinder")
-                    Text("Capture")
+                    Label("实时境音", systemImage: "camera.circle.fill")
                 }
-                .tag(0)
             
             HistoryView()
                 .tabItem {
-                    Image(systemName: "clock.fill")
-                    Text("History")
+                    Label("我的音景", systemImage: "music.note.list")
                 }
-                .tag(1)
             
-            HeartRateView()
+            // 后续可替换为 MapKit 地图
+            Text("全球音景地图")
                 .tabItem {
-                    Image(systemName: "heart.fill")
-                    Text("Heart Rate")
+                    Label("地图", systemImage: "map")
                 }
-                .tag(2)
+            
+            Text("设置")
+                .tabItem {
+                    Label("设置", systemImage: "gear")
+                }
         }
         .tint(.purple)
     }
-}
-
-#Preview {
-    ContentView()
 }

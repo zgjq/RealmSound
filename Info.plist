@@ -2,50 +2,19 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleDevelopmentRegion</key>
-	<string>$(DEVELOPMENT_LANGUAGE)</string>
-	<key>CFBundleExecutable</key>
-	<string>$(EXECUTABLE_NAME)</string>
-	<key>CFBundleIdentifier</key>
-	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
-	<key>CFBundlePackageType</key>
-	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.0</string>
-	<key>CFBundleVersion</key>
-	<string>1</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>RealmSound uses your camera to capture spirits in augmented reality.</string>
+	<string>境音需要使用相机生成 AR 音灵</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>RealmSound uses your microphone to record ambient sounds.</string>
-	<key>UIApplicationSceneManifest</key>
-	<dict>
-		<key>UIApplicationSupportsMultipleScenes</key>
-		<true/>
-	</dict>
-	<key>UILaunchScreen</key>
-	<dict/>
-	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-		<string>arkit</string>
-	</array>
-	<key>UISupportedInterfaceOrientations</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
+	<string>用于实时空间音频采集</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>保存音景位置</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>读取心率生成个性化音乐</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>读取心率生成个性化音乐</string>
+	<key>NSAppleIntelligenceUsageDescription</key>
+	<string>使用 Apple Intelligence 生成个性化音乐和提示词</string>
+	<key>RPScreenRecorderUsageDescription</key>
+	<string>录制 AR 音景视频</string>
 </dict>
 </plist>

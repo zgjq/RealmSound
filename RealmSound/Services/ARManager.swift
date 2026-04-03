@@ -1,105 +1,41 @@
-import Foundation
-import ARKit
 import RealityKit
-import SwiftUI
+import ARKit
 
-/// Manages AR session, anchor placement, and spirit spawning
-@MainActor
-class ARManager: ObservableObject {
-    @Published var isSessionRunning = false
-    @Published var detectedPlanes: Int = 0
-    @Published var currentSoundscape: Soundscape?
-    @Published var currentHeartRate: Int?
-    @Published var spirits: [CapturedSpirit] = []
-    @Published var errorMessage: String?
+class ARManager {
+    static let shared = ARManager()
+    private init() {}
     
-    private var arView: ARView?
-    private var anchorEntity = AnchorEntity(world: .zero)
-    private let soundscapeService = AppleIntelligenceService()
-    
-    func setupARView(_ view: ARView) {
-        arView = view
-        
+    func startSession(in arView: ARView) {
         let config = ARWorldTrackingConfiguration()
+        config.sceneReconstruction = .mesh
         config.planeDetection = [.horizontal, .vertical]
-        config.environmentTexturing = .automatic
+        arView.session.run(config)
         
-        if let frame = view.session.currentFrame {
-            let lightEstimate = frame.lightEstimate
-            // Use light estimate for particle intensity
-        }
+        createGlowingSpirit(in: arView)
+    }
+    
+    private func createGlowingSpirit(in arView: ARView) {
+        let anchor = AnchorEntity(.plane(.horizontal, classification: .floor))
         
-        view.session.run(config)
-        isSessionRunning = true
+        // 加载自定义 Metal Shader
+        guard let metalLib = try? Device.default.makeDefaultLibrary(),
+              let fragmentFunc = metalLib.makeFunction(name: "glowingParticleFragment"),
+              let vertexFunc = metalLib.makeFunction(name: "glowingParticleVertex") else { return }
         
-        // Add anchor to scene
-        view.scene.addAnchor(anchorEntity)
+        var material = CustomMaterial(from: SimpleMaterial(color: .white, isMetallic: false))
+        material.customFragmentShader = fragmentFunc
+        material.customVertexShader = vertexFunc
         
-        // Start simulating soundscape detection
-        startSoundscapeDetection()
-    }
-    
-    func updateARView(_ view: ARView) {
-        // Update AR view state if needed
-    }
-    
-    /// Simulate ambient soundscape detection
-    private func startSoundscapeDetection() {
-        Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { _ in
-            Task { @MainActor in
-                self.currentSoundscape = Soundscape.allCases.randomElement()
-            }
-        }
-    }
-    
-    /// Place a spirit anchor at a random position in AR space
-    func placeSpiritAnchor() {
-        let x = Double.random(in: -2...2)
-        let y = Double.random(in: 0.5...2.0)
-        let z = Double.random(in: -3...(-1))
+        let mesh = MeshResource.generateSphere(radius: 0.25)
+        let entity = ModelEntity(mesh: mesh, materials: [material])
         
-        let spiritAnchor = AnchorEntity(world: SIMD3<Float>(Float(x), Float(y), Float(z)))
+        // 实时 uniform（时间 + 强度）
+        let timeParam = entity.playAnimation(for: .custom { time, _ in
+            entity.components[CustomMaterialComponent.self]?.setParameter("time", value: Float(time))
+            entity.components[CustomMaterialComponent.self]?.setParameter("intensity", value: Float(1.0))
+        })
         
-        // Add visual representation
-        let sphere = ModelEntity(
-            mesh: .generateSphere(radius: 0.1),
-            materials: [SimpleMaterial(color: .purple, isMetallic: false)]
-        )
-        spiritAnchor.addChild(sphere)
-        anchorEntity.addChild(spiritAnchor)
-    }
-    
-    /// Save a captured spirit to local storage
-    func saveSpirit(_ spirit: CapturedSpirit) {
-        spirits.insert(spirit, at: 0)
-        saveSpiritsToDisk()
-    }
-    
-    /// Load saved spirits from disk
-    func loadSpirits() {
-        guard let url = spiritsFileURL else { return }
-        guard let data = try? Data(contentsOf: url) else { return }
-        spirits = (try? JSONDecoder().decode([CapturedSpirit].self, from: data)) ?? []
-    }
-    
-    /// Generate a spirit name
-    func generateSpiritName() -> String {
-        AppleIntelligenceService.shared.generateSpiritName(
-            soundscape: currentSoundscape,
-            heartRate: currentHeartRate
-        )
-    }
-    
-    // MARK: - Persistence
-    
-    private var spiritsFileURL: URL? {
-        FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first?
-            .appendingPathComponent("spirits.json")
-    }
-    
-    private func saveSpiritsToDisk() {
-        guard let url = spiritsFileURL else { return }
-        guard let data = try? JSONEncoder().encode(spirits) else { return }
-        try? data.write(to: url)
+        anchor.addChild(entity)
+        arView.scene.addAnchor(anchor)
     }
 }

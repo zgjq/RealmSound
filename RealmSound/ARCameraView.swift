@@ -1,133 +1,68 @@
 import SwiftUI
-import ARKit
 import RealityKit
+import ReplayKit
 
 struct ARCameraView: View {
-    @StateObject private var arManager = ARManager()
-    @State private var showControlPanel = false
-    @State private var capturedSpirit: CapturedSpirit?
+    @Environment(\.managedObjectContext) private var viewContext
+    @State private var arView = ARView(frame: .zero)
+    @State private var intensity: Double = 0.7
+    @State private var fusion: Double = 0.8
+    @State private var heartRate: Int = 72
     @State private var isRecording = false
     
     var body: some View {
         ZStack {
-            ARViewContainer(arManager: arManager)
-                .ignoresSafeArea()
+            ARViewContainer(arView: $arView).ignoresSafeArea()
             
-            // Particle overlay
-            if arManager.isSessionRunning {
-                GlowingParticleOverlay()
-                    .allowsHitTesting(false)
-            }
-            
-            // Capture button
             VStack {
+                HStack {
+                    Text("境音").font(.largeTitle.bold()).foregroundStyle(.white.shadow(.drop(radius: 10)))
+                    Spacer()
+                    HeartRateView(heartRate: $heartRate)
+                }
+                .padding(.horizontal).padding(.top, 50)
                 Spacer()
-                
-                CaptureButton(isRecording: $isRecording) {
-                    captureSpirit()
-                }
-                .padding(.bottom, 60)
-                
-                // Control panel toggle
-                Button(action: { showControlPanel.toggle() }) {
-                    Image(systemName: "slider.horizontal.3")
-                        .font(.title2)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.black.opacity(0.5))
-                        .clipShape(Circle())
-                }
-                .padding(.bottom, 20)
+                ControlPanel(intensity: $intensity, fusion: $fusion).padding(.bottom, 40)
             }
             
-            // Control panel sheet
-            if showControlPanel {
-                ControlPanel(arManager: arManager)
-                    .transition(.move(edge: .bottom))
-            }
+            CaptureButton { await captureAndExportVideo() }
+                .position(x: UIScreen.main.bounds.width / 2, y: UIScreen.main.bounds.height - 180)
         }
-        .sheet(item: $capturedSpirit) { spirit in
-            SpiritDetailSheet(spirit: spirit)
+        .onAppear {
+            ARManager.shared.startSession(in: arView)
+            simulateHealthKit()
+            Task { await generateInitialMusic() }
         }
     }
     
-    private func captureSpirit() {
-        isRecording = true
-        
-        // Simulate spirit capture
-        let spirit = CapturedSpirit(
-            id: UUID(),
-            name: arManager.generateSpiritName(),
-            capturedAt: Date(),
-            soundscape: arManager.currentSoundscape,
-            heartRate: arManager.currentHeartRate,
-            imageUrl: nil
+    private func simulateHealthKit() {
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+            heartRate = Int.random(in: 65...85)
+        }
+    }
+    
+    @MainActor
+    private func generateInitialMusic() async {
+        let prompt = try? await AppleIntelligenceService.shared.generateMusicPrompt(
+            from: "樱花街道", heartRate: heartRate, intensity: intensity
         )
+        let audioURL = try? await AppleIntelligenceService.shared.generateSpatialAudio(prompt: prompt ?? "")
         
-        capturedSpirit = spirit
-        arManager.saveSpirit(spirit)
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            isRecording = false
-        }
-    }
-}
-
-// MARK: - Particle Overlay (Metal Shader Integration)
-struct GlowingParticleOverlay: UIViewRepresentable {
-    func makeUIView(context: Context) -> UIView {
-        let view = UIView()
-        view.backgroundColor = .clear
-        // In production, add MTKView with Metal shader here
-        return view
+        let soundscape = Soundscape(title: "AI 樱花梦")
+        soundscape.prompt = prompt
+        soundscape.audioURL = audioURL
+        viewContext.insert(soundscape)
+        try? viewContext.save()
     }
     
-    func updateUIView(_ uiView: UIView, context: Context) {}
-}
-
-// MARK: - Spirit Detail Sheet
-struct SpiritDetailSheet: View {
-    let spirit: CapturedSpirit
-    @Environment(\.dismiss) private var dismiss
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "sparkles")
-                    .font(.system(size: 80))
-                    .foregroundStyle(.purple)
-                
-                Text(spirit.name)
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                
-                if let soundscape = spirit.soundscape {
-                    Text(soundscape.description)
-                        .font(.subheadline)
-                        .foregroundColor(.secondary)
-                }
-                
-                if let heartRate = spirit.heartRate {
-                    Label("\(heartRate) BPM", systemImage: "heart.fill")
-                        .foregroundColor(.red)
-                }
-                
-                Text(spirit.capturedAt.formatted(date: .long, time: .shortened))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .navigationTitle("Captured Spirit")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
-                }
-            }
+    @MainActor
+    private func captureAndExportVideo() async {
+        let exporter = VideoExporter()
+        await exporter.start15SecondARRecording(in: arView) { url in
+            let soundscape = Soundscape(title: "捕捉音灵 #\(Int.random(in: 100...999))")
+            soundscape.audioURL = url
+            viewContext.insert(soundscape)
+            try? viewContext.save()
         }
     }
-}
-
-#Preview {
-    ARCameraView()
 }
