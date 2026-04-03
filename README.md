@@ -21,10 +21,14 @@ It’s not just an AR filter, nor is it merely background music; it’s an app t
    Directly generate vertical AR videos for TikTok/Xiaohongshu, Live Photos, or spatial audio files.
 
 ## Requirements
-- iOS 17.0+
-- Xcode 16+
-- Swift 5.9+
-- Apple Silicon Mac for development
+- **UI**: SwiftUI + RealityKit
+- **AR & Vision**: ARKit + Vision Framework (object/scene recognition)
+- **AI**: Apple Intelligence (writing + image/music prompt generation) + Core ML (on-device model fine-tuning)
+- **Audio**: AVAudioEngine + Spatial Audio + MusicKit (if you want to integrate Apple Music-style features)
+- **Data**: HealthKit + WeatherKit + Core Location
+- **Backend**: CloudKit (for free soundscape sharing) or Supabase (for more social features)
+- **Icons/Design**: Quickly create 3D sound spirit assets using Reality Composer Pro
+ 
 
 ## Setup
 1. Clone the repository
